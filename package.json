@@ -1,7 +1,7 @@
 {
   "name": "diona-control-panel-v2",
   "private": true,
-  "version": "2.0.6",
+  "version": "2.0.7",
   "description": "Diona Control Panel",
   "author": "zhukovskiyyy",
   "main": "electron/main.cjs",
@@ -34,27 +34,37 @@
     "vite": "^5.4.2"
   },
   "build": {
-    "appId": "com.diona.control",
-    "productName": "Diona",
-    "directories": {
-      "output": "dist"
-    },
-    "files": [
-      "dist/**/*",
-      "electron/**/*",
-      "backend/**/*",
-      "package.json",
-      "telegramBot.js"
-    ],
-    "win": {
-      "target": "nsis"
-    },
-    "publish": [
-      {
-        "provider": "github",
-        "owner": "zhukovskiyyy",
-        "repo": "diona-control"
-      }
-    ]
-  }
+  "appId": "com.diona.control",
+
+  "productName": "Diona",
+
+  "directories": {
+    "output": "release"
+  },
+
+  "files": [
+    "frontend/dist/**/*",
+    "electron/**/*",
+    "backend/**/*",
+    "package.json",
+    "telegramBot.js",
+    "reminders.json"
+  ],
+
+  "extraMetadata": {
+    "main": "electron/main.cjs"
+  },
+
+  "win": {
+    "target": "nsis"
+  },
+
+  "publish": [
+    {
+      "provider": "github",
+      "owner": "zhukovskiyyy",
+      "repo": "diona-control"
+    }
+  ]
+}
 }
