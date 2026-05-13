@@ -1,7 +1,7 @@
 {
   "name": "diona-control-panel-v2",
   "private": true,
-  "version": "2.0.5",
+  "version": "2.0.6",
   "description": "Diona Control Panel",
   "author": "zhukovskiyyy",
   "main": "electron/main.cjs",
