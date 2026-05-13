@@ -1,41 +1,76 @@
-import {
-  useEffect
-} from 'react';
+export default function MeshCentral() {
 
-const { ipcRenderer } =
-  window.require('electron');
+  const openMesh = () => {
 
-function MeshCentral() {
-  useEffect(() => {
+    const {
+      ipcRenderer
+    } = window.require('electron');
+
     ipcRenderer.send(
-      'attach-mesh'
+      'open-mesh-window'
     );
 
-    return () => {
-      ipcRenderer.send(
-        'detach-mesh'
-      );
-    };
-  }, []);
+  };
 
   return (
-    <div className="mesh-page">
-      <div className="mesh-page-header">
-        <div>
-          <h1>MeshCentral</h1>
 
-          <p>
-            Встроенная система
-            удалённого управления
-          </p>
-        </div>
+    <div
+      style={{
+        color: 'white'
+      }}
+    >
 
-        <div className="mesh-live-status">
-          CONNECTED
-        </div>
-      </div>
+      <h1
+        style={{
+          fontSize: '56px',
+          marginBottom: '10px'
+        }}
+      >
+        MeshCentral
+      </h1>
+
+      <p
+        style={{
+          opacity: 0.7,
+          marginBottom: '30px'
+        }}
+      >
+        Встроенная система удалённого управления
+      </p>
+
+      <button
+        onClick={openMesh}
+        style={{
+
+          background:
+            'linear-gradient(90deg,#ff00cc,#7a2cff)',
+
+          border: 'none',
+
+          color: 'white',
+
+          padding: '18px 28px',
+
+          borderRadius: '18px',
+
+          fontSize: '18px',
+
+          fontWeight: '700',
+
+          cursor: 'pointer',
+
+          boxShadow:
+            '0 0 30px rgba(180,0,255,0.35)'
+
+        }}
+      >
+
+        Открыть MeshCentral
+
+      </button>
+
     </div>
-  );
-}
 
-export default MeshCentral;
+  );
+
+}

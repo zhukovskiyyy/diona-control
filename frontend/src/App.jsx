@@ -1,5 +1,5 @@
 import {
-  BrowserRouter,
+  HashRouter,
   Routes,
   Route
 } from 'react-router-dom';
@@ -32,15 +32,20 @@ import './styles/global.css';
 
 
 function App() {
+
   const [loading, setLoading] =
     useState(true);
 
   useEffect(() => {
+
     const timer = setTimeout(() => {
+
       setLoading(false);
+
     }, 2200);
 
     return () => clearTimeout(timer);
+
   }, []);
 
   if (loading) {
@@ -48,17 +53,23 @@ function App() {
   }
 
   return (
-    <BrowserRouter>
+
+    <HashRouter>
+
       <div className="layout">
+
         <Sidebar />
 
         <main className="main-content">
+
           <div className="custom-titlebar">
+
             <div className="titlebar-title">
               Diona Control Panel
             </div>
 
             <WindowControls />
+
           </div>
 
           <Topbar />
@@ -66,6 +77,7 @@ function App() {
           <Tabs />
 
           <Routes>
+
             <Route
               path="/"
               element={<Dashboard />}
@@ -85,39 +97,52 @@ function App() {
               path="/terminal"
               element={<Terminal />}
             />
+
             <Route
               path="/mesh"
               element={<MeshCentral />}
             />
+
             <Route
               path="/device/:id"
               element={<DeviceDetails />}
-          />
-          <Route
-            path="/processes"
-            element={<Processes />}
-          />
-          <Route
-            path="/shift-manager"
-            element={<ShiftManager />}
-          />   
-          <Route
-            path="/statistics"
-            element={<Statistics />}
-          /> 
-          <Route
-            path="/archive"
-            element={<Archive />}
-          />
-          <Route
-            path="/settings"
-            element={<SettingsPage />}
-          />
+            />
+
+            <Route
+              path="/processes"
+              element={<Processes />}
+            />
+
+            <Route
+              path="/shift-manager"
+              element={<ShiftManager />}
+            />
+
+            <Route
+              path="/statistics"
+              element={<Statistics />}
+            />
+
+            <Route
+              path="/archive"
+              element={<Archive />}
+            />
+
+            <Route
+              path="/settings"
+              element={<SettingsPage />}
+            />
+
           </Routes>
+
         </main>
+
       </div>
-    </BrowserRouter>
+
+    </HashRouter>
+
   );
+
 }
 
 export default App;

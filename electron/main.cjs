@@ -5,51 +5,105 @@ const {
   app,
   BrowserWindow,
   BrowserView,
-  ipcMain
+  ipcMain,
+  dialog
 } = require('electron');
 
 const axios = require('axios');
 const si = require('systeminformation');
 const { exec } = require('child_process');
 const os = require('os');
-const https = require('https');
 const path = require('path');
+
 const fs = require('fs');
+
+const remindersPath =
+  path.join(
+    __dirname,
+    '../reminders.json'
+  );
+
 const telegramBot =
-  require('../telegramBot')
+  require('../telegramBot');
+
 const {
   autoUpdater
 } = require('electron-updater');
-app.commandLine.appendSwitch('ignore-certificate-errors');
+
+app.commandLine.appendSwitch(
+  'ignore-certificate-errors'
+);
 
 let mainWindow;
-let meshView;
-let meshAttached = false;
 
-ipcMain.on(
-  'attach-mesh',
+
+
+/* =========================
+   AUTO UPDATE
+========================= */
+
+autoUpdater.autoDownload = true;
+autoUpdater.autoInstallOnAppQuit = true;
+
+autoUpdater.on(
+  'checking-for-update',
   () => {
-    if (meshAttached) return;
-
-    mainWindow.setBrowserView(
-      meshView
-    );
-
-    const bounds =
-      mainWindow.getBounds();
-
-    meshView.setBounds({
-      x: 320,
-      y: 160,
-      width:
-        bounds.width - 350,
-      height:
-        bounds.height - 190
-    });
-
-    meshAttached = true;
+    console.log('Checking updates...');
   }
 );
+
+autoUpdater.on(
+  'update-available',
+  () => {
+    console.log('Update available');
+  }
+);
+
+autoUpdater.on(
+  'update-not-available',
+  () => {
+    console.log('No updates');
+  }
+);
+
+autoUpdater.on(
+  'download-progress',
+  (progress) => {
+
+    console.log(
+      `Downloading: ${Math.round(progress.percent)}%`
+    );
+
+  }
+);
+
+autoUpdater.on(
+  'update-downloaded',
+  () => {
+
+    dialog.showMessageBox({
+      type: 'info',
+      title: 'Обновление',
+      message:
+        'Новая версия Diona загружена. Приложение перезапустится.'
+    });
+
+    autoUpdater.quitAndInstall();
+
+  }
+);
+
+autoUpdater.on(
+  'error',
+  (err) => {
+    console.log(err);
+  }
+);
+
+
+/* =========================
+   IPC
+========================= */
 
 ipcMain.handle(
   'get-statistics',
@@ -66,47 +120,99 @@ ipcMain.handle(
 
   async (_, room) => {
 
-    telegramBot.clearRoomStatistics(
-      room
-    );
+    try {
 
-    return true;
+      if (
+        telegramBot.statistics?.[room]
+      ) {
+
+        delete telegramBot.statistics[
+          room
+        ];
+
+      }
+
+      return true;
+
+    } catch (err) {
+
+      console.log(err);
+
+      return false;
+
+    }
 
   }
 
 );
 
 ipcMain.handle(
-
   'get-notifications',
-
   async () => {
 
     return telegramBot.notifications;
 
   }
+);
 
+ipcMain.handle(
+  'delete-notification',
+  async (_, id) => {
+
+    telegramBot.deleteNotification(
+      id
+    );
+
+    return true;
+
+  }
 );
 
 ipcMain.handle(
 
-  'clear-archive',
+  'delete-stat-message',
 
-  async () => {
+  async (_, data) => {
 
-    telegramBot.clearArchive();
+    try {
 
-    return true;
+      const {
+        room,
+        index
+      } = data;
+
+      if (
+        telegramBot.statistics?.[room]
+      ) {
+
+        telegramBot.statistics[
+          room
+        ].splice(
+          index,
+          1
+        );
+
+      }
+
+      return true;
+
+    } catch (err) {
+
+      console.log(err);
+
+      return false;
+
+    }
 
   }
 
 );
 
 ipcMain.handle(
-  'remind-all',
+  'clear-archive',
   async () => {
 
-    await telegramBot.remindAll();
+    telegramBot.clearArchive();
 
     return true;
 
@@ -134,6 +240,114 @@ ipcMain.handle(
 );
 
 ipcMain.handle(
+  'remind-all',
+  async () => {
+
+    await telegramBot.remindAll();
+
+    return true;
+
+  }
+);
+
+/* =========================
+   REMINDERS
+========================= */
+
+ipcMain.handle(
+
+  'get-reminders',
+
+  async () => {
+
+    try {
+
+      if (
+        !fs.existsSync(
+          remindersPath
+        )
+      ) {
+
+        fs.writeFileSync(
+
+          remindersPath,
+
+          JSON.stringify(
+            [
+              '14:45',
+              '17:45',
+              '20:45',
+              '06:45'
+            ],
+            null,
+            2
+          )
+
+        );
+
+      }
+
+      return JSON.parse(
+
+        fs.readFileSync(
+          remindersPath,
+          'utf8'
+        )
+
+      );
+
+    } catch (err) {
+
+      console.log(err);
+
+      return [];
+
+    }
+
+  }
+
+);
+
+ipcMain.handle(
+
+  'save-reminders',
+
+  async (_, reminders) => {
+
+    try {
+
+      fs.writeFileSync(
+
+        remindersPath,
+
+        JSON.stringify(
+          reminders,
+          null,
+          2
+        )
+
+      );
+
+      return true;
+
+    } catch (err) {
+
+      console.log(err);
+
+      return false;
+
+    }
+
+  }
+
+);
+
+
+/* =========================
+   SHIFT CONTROL
+========================= */
+
+ipcMain.handle(
   'start-shift',
   async () => {
 
@@ -148,6 +362,7 @@ ipcMain.handle(
     );
 
     return true;
+
   }
 );
 
@@ -166,112 +381,127 @@ ipcMain.handle(
     );
 
     return true;
+
   }
 );
 
-ipcMain.on(
-  'detach-mesh',
-  () => {
-    if (!meshAttached) return;
 
-    mainWindow.removeBrowserView(
-      meshView
-    );
-
-    meshAttached = false;
-  }
-);
+/* =========================
+   SYSTEM METRICS
+========================= */
 
 async function getSystemMetrics() {
-  const cpu = await si.currentLoad();
-  const mem = await si.mem();
-  const network = await si.networkStats();
+
+  const cpu =
+    await si.currentLoad();
+
+  const mem =
+    await si.mem();
+
+  const network =
+    await si.networkStats();
 
   return {
-    cpu: Math.round(cpu.currentLoad),
 
-    ram: (
-      (mem.active / 1024 / 1024 / 1024)
-    ).toFixed(1),
+    cpu:
+      Math.round(cpu.currentLoad),
 
-    uptime: Math.floor(
-      require('os').uptime() / 3600
-    ),
+    ram:
+      (
+        mem.active /
+        1024 /
+        1024 /
+        1024
+      ).toFixed(1),
 
-    network: Math.round(
-      network[0]?.rx_sec / 1024 / 1024 || 0
-    )
+    uptime:
+      Math.floor(
+        os.uptime() / 3600
+      ),
+
+    network:
+      Math.round(
+        network[0]?.rx_sec /
+        1024 /
+        1024 || 0
+      )
+
   };
 }
 
-function createWindow() {
-  mainWindow = new BrowserWindow({
-    width: 1700,
-    height: 980,
-    backgroundColor: '#07030d',
-    autoHideMenuBar: true,
-    frame: false,
-    title: 'Diona Control Panel',
+ipcMain.handle(
+  'get-system-metrics',
+  async () => {
 
-    webPreferences: {
-      nodeIntegration: true,
-      contextIsolation: false
-    }
-  });
+    return await getSystemMetrics();
 
-  mainWindow.loadURL('http://localhost:5173');
-
-  createMeshView();
-
-  mainWindow.on('resize', () => {
-    resizeMeshView();
-  });
-}
-
-function createMeshView() {
-  meshView = new BrowserView({
-    webPreferences: {
-      nodeIntegration: false,
-      contextIsolation: true
-    }
-  });
-
-  mainWindow.removeBrowserView(meshView);
-
-  resizeMeshView();
-
-  meshView.webContents.loadURL(
-  'https://10.101.10.232/'
+  }
 );
+
+
+/* =========================
+   WINDOW
+========================= */
+
+function createWindow() {
+
+  mainWindow =
+    new BrowserWindow({
+
+      width: 1700,
+      height: 980,
+
+      icon: path.join(
+        __dirname,
+        '../assets/icons/win/icon.ico'
+      ),
+
+      minWidth: 1280,
+      minHeight: 720,
+
+      backgroundColor:
+        '#07030d',
+
+      autoHideMenuBar: true,
+
+      frame: false,
+
+      title:
+        'Diona Control Panel',
+
+      webPreferences: {
+
+        nodeIntegration: true,
+
+        contextIsolation: false
+
+      }
+
+    });
+
+  const startUrl =
+    app.isPackaged
+      ? `file://${path.join(__dirname, '../dist/index.html')}`
+      : 'http://localhost:5173';
+
+  mainWindow.loadURL(startUrl);
+
+  if (!app.isPackaged && false) {
+  mainWindow.webContents.openDevTools();
+}
 }
 
-function resizeMeshView() {
-  if (!mainWindow || !meshView) return;
 
-  const bounds = mainWindow.getBounds();
-
- meshView.setBounds({
-    x: 760,
-    y: 390,
-    width: bounds.width - 790,
-    height: bounds.height - 440
-  })
- 
-  meshView.setAutoResize({
-    width: true,
-    height: true
-  });
-}
-
-ipcMain.handle('get-system-metrics', async () => {
-  return await getSystemMetrics();
-});
+/* =========================
+   DEVICES
+========================= */
 
 ipcMain.handle(
   'get-devices',
   async () => {
 
     return [
+
       {
         id: 1,
         name: 'ADMIN-PC',
@@ -298,121 +528,42 @@ ipcMain.handle(
         group: 'Streaming',
         status: 'offline'
       }
+
     ];
+
   }
 );
+
+
+/* =========================
+   NETWORK SCAN
+========================= */
 
 ipcMain.handle(
   'scan-network',
   async () => {
-    return new Promise((resolve) => {
-      exec(
-        'arp -a',
-        async (error, stdout) => {
-          if (error) {
-            resolve([]);
-            return;
-          }
 
-          const lines =
-            stdout.split('\n');
+    return [];
 
-          const ips = [];
-
-          lines.forEach((line) => {
-            const match =
-              line.match(
-                /(\\d+\\.\\d+\\.\\d+\\.\\d+)/
-              );
-
-            if (match) {
-              ips.push(match[1]);
-            }
-          });
-
-          const uniqueIps =
-            [...new Set(ips)];
-
-          const devices =
-            await Promise.all(
-              uniqueIps.map(
-                async (ip) => {
-                  return new Promise(
-                    (resolveDevice) => {
-                      exec(
-                        `ping -n 1 ${ip}`,
-                        (
-                          pingError,
-                          pingStdout
-                        ) => {
-                          const online =
-                            !pingError;
-
-                          exec(
-                            `nslookup ${ip}`,
-                            (
-                              _,
-                              nslookupOut
-                            ) => {
-                              const hostnameMatch =
-                                nslookupOut.match(
-                                  /Name:\\s+(.+)/
-                                );
-
-                              resolveDevice({
-                                hostname:
-                                  hostnameMatch?.[1] ||
-                                  'Unknown',
-
-                                ip,
-
-                                status:
-                                  online
-                                    ? 'online'
-                                    : 'offline',
-
-                                latency:
-                                  online
-                                    ? (
-                                        Math.floor(
-                                          Math.random() *
-                                            10
-                                        ) + 1
-                                      ) +
-                                      'ms'
-                                    : 'timeout',
-
-                                os:
-                                  online
-                                    ? 'Detected'
-                                    : 'Unknown'
-                              });
-                            }
-                          );
-                        }
-                      );
-                    }
-                  );
-                }
-              )
-            );
-
-          resolve(devices);
-        }
-      );
-    });
   }
 );
+
+
+/* =========================
+   PROCESSES
+========================= */
 
 ipcMain.handle(
   'get-processes',
   async () => {
+
     const processes =
       await si.processes();
 
     return processes.list
       .slice(0, 25)
       .map((proc) => ({
+
         name: proc.name,
 
         pid: proc.pid,
@@ -426,59 +577,164 @@ ipcMain.handle(
             1024 /
             1024
           )
+
       }));
+
   }
 );
+
+
+/* =========================
+   TERMINAL
+========================= */
 
 ipcMain.handle(
   'terminal-command',
   async (_, command) => {
+
     return new Promise((resolve) => {
+
       exec(
         command,
+
         {
           timeout: 10000
         },
-        (error, stdout, stderr) => {
+
+        (
+          error,
+          stdout,
+          stderr
+        ) => {
+
           if (error) {
-            resolve(stderr || error.message);
+
+            resolve(
+              stderr || error.message
+            );
+
             return;
           }
 
           resolve(stdout || stderr);
+
         }
       );
+
     });
+
   }
 );
 
-ipcMain.on('window-minimize', () => {
-  mainWindow.minimize();
-});
+/* =========================
+   MESH VIEW
+========================= */
 
-ipcMain.on('window-maximize', () => {
-  if (mainWindow.isMaximized()) {
-    mainWindow.unmaximize();
-  } else {
-    mainWindow.maximize();
+
+
+/* =========================
+   WINDOW BUTTONS
+========================= */
+
+ipcMain.on(
+  'window-minimize',
+  () => {
+    mainWindow.minimize();
   }
-});
+);
 
-ipcMain.on('window-close', () => {
-  mainWindow.close();
-});
+ipcMain.on(
+  'window-maximize',
+  () => {
+
+    if (
+      mainWindow.isMaximized()
+    ) {
+
+      mainWindow.unmaximize();
+
+    } else {
+
+      mainWindow.maximize();
+
+    }
+
+  }
+);
+
+ipcMain.on(
+  'window-close',
+  () => {
+    mainWindow.close();
+  }
+);
+
+
+/* =========================
+   APP START
+========================= */
+
+ipcMain.on(
+  'open-mesh-window',
+  () => {
+
+    const meshWindow =
+      new BrowserWindow({
+
+        width: 1600,
+        height: 1000,
+
+        autoHideMenuBar: true,
+
+        backgroundColor:
+          '#05010a',
+
+        title:
+          'MeshCentral',
+
+        webPreferences: {
+
+          contextIsolation: true,
+          nodeIntegration: false
+
+        }
+
+      });
+
+    meshWindow.loadURL(
+      'https://10.101.10.232/'
+    );
+
+    meshWindow.maximize();
+
+  }
+);
+
 
 app.whenReady().then(() => {
 
   createWindow();
 
-  autoUpdater.checkForUpdatesAndNotify();
+  setTimeout(() => {
+
+    autoUpdater
+      .checkForUpdatesAndNotify();
+
+  }, 5000);
 
 });
 
+app.on(
+  'window-all-closed',
+  () => {
 
-app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
-    app.quit();
+    if (
+      process.platform !== 'darwin'
+    ) {
+
+      app.quit();
+
+    }
+
   }
-});
+);

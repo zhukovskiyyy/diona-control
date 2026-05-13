@@ -47,6 +47,7 @@ function Statistics() {
       );
 
     setStats(result);
+
   }
 
   /*
@@ -58,6 +59,7 @@ function Statistics() {
     await ipcRenderer.invoke(
       'remind-all'
     );
+
   }
 
   /*
@@ -77,6 +79,31 @@ function Statistics() {
     );
 
     loadStats();
+
+  }
+
+  /*
+    DELETE MESSAGE
+  */
+
+  async function deleteMessage(
+    room,
+    index
+  ) {
+
+    await ipcRenderer.invoke(
+
+      'delete-stat-message',
+
+      {
+        room,
+        index
+      }
+
+    );
+
+    loadStats();
+
   }
 
   /*
@@ -120,6 +147,7 @@ function Statistics() {
       );
 
   return (
+
     <div className="statistics-page">
 
       <div
@@ -147,11 +175,8 @@ function Statistics() {
           <div
             style={{
               marginTop: 18,
-
               display: 'flex',
-
               gap: 16,
-
               flexWrap: 'wrap'
             }}
           >
@@ -161,7 +186,6 @@ function Statistics() {
               style={{
                 padding:
                   '18px 24px',
-
                 minWidth: 240
               }}
             >
@@ -178,9 +202,7 @@ function Statistics() {
               <div
                 style={{
                   marginTop: 8,
-
                   fontSize: 34,
-
                   fontWeight: 800
                 }}
               >
@@ -286,11 +308,8 @@ function Statistics() {
                     <div
                       style={{
                         marginTop: 6,
-
                         fontSize: 16,
-
                         opacity: 0.7,
-
                         fontWeight: 600
                       }}
                     >
@@ -376,12 +395,9 @@ function Statistics() {
                 <div
                   style={{
                     marginTop: 24,
-
                     display: 'flex',
-
                     flexDirection:
                       'column',
-
                     gap: 14
                   }}
                 >
@@ -400,9 +416,50 @@ function Statistics() {
 
                           padding: 16,
 
-                          borderRadius: 16
+                          borderRadius: 16,
+
+                          position: 'relative'
                         }}
                       >
+
+                        <button
+
+                          onClick={() =>
+                            deleteMessage(
+                              room,
+                              index
+                            )
+                          }
+
+                          style={{
+
+                            position: 'absolute',
+
+                            top: 12,
+
+                            right: 12,
+
+                            width: 30,
+
+                            height: 30,
+
+                            borderRadius: 8,
+
+                            border: 'none',
+
+                            background: '#dc2626',
+
+                            color: 'white',
+
+                            cursor: 'pointer',
+
+                            fontWeight: 700
+
+                          }}
+
+                        >
+                          ×
+                        </button>
 
                         <div
                           style={{
@@ -451,7 +508,9 @@ function Statistics() {
       </div>
 
     </div>
+
   );
+
 }
 
 export default Statistics;

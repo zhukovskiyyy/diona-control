@@ -15,8 +15,10 @@ const TelegramBot =
 const token =
   '8754615229:AAH1T55b_pUfpi4c96nk_vA1McYyK82ae5I';
 
-const ADMIN_CHAT_ID =
-  869376046;
+const ADMIN_CHAT_IDS = [
+  869376046,
+  7209700362
+];
 
 const bot =
   new TelegramBot(token, {
@@ -29,7 +31,7 @@ const bot =
 
 const roomMap = {
 
-  8774392985: 'Cloud',
+  7280312795: 'Cloud',
 
   6703949145: 'Cosmo',
 
@@ -41,7 +43,9 @@ const roomMap = {
 
   8274834580: 'Play',
 
-  7163344610: 'Study'
+  7163344610: 'Study',
+
+  8774392985: 'admin test'
 
 };
 
@@ -142,17 +146,19 @@ function createNotification({
 
   notifications.unshift({
 
-    title,
+  id: Date.now(),
 
-    message,
+  title,
 
-    type,
+  message,
 
-    time:
-      new Date()
-        .toLocaleTimeString()
+  type,
 
-  });
+  time:
+    new Date()
+      .toLocaleTimeString()
+
+});
 
   /*
     KEEP LAST 20
@@ -414,13 +420,17 @@ total:2100`
       SEND TO ADMIN
     */
 
-    await bot.sendMessage(
+    for (const adminId of ADMIN_CHAT_IDS) {
 
-      ADMIN_CHAT_ID,
+  await bot.sendMessage(
 
-      `📊 ${room}\n\n${text}`
+    adminId,
 
-    );
+    `📊 ${room}\n\n${text}`
+
+  );
+
+}
 
     /*
       DELETE USER MESSAGE
@@ -644,73 +654,136 @@ function archiveStatistics() {
 }
 
 /*
-  AUTO REMINDERS
+  DYNAMIC REMINDERS
 */
 
+function getReminderTimes() {
+
+  try {
+
+    const remindersPath =
+      path.join(
+        __dirname,
+        'reminders.json'
+      );
+
+    if (
+      !fs.existsSync(
+        remindersPath
+      )
+    ) {
+
+      const defaults = [
+
+        '14:45',
+        '17:45',
+        '20:45',
+        '06:45'
+
+      ];
+
+      fs.writeFileSync(
+
+        remindersPath,
+
+        JSON.stringify(
+          defaults,
+          null,
+          2
+        )
+
+      );
+
+      return defaults;
+
+    }
+
+    return JSON.parse(
+
+      fs.readFileSync(
+        remindersPath,
+        'utf8'
+      )
+
+    );
+
+  } catch (err) {
+
+    console.log(err);
+
+    return [];
+
+  }
+
+}
+
+/*
+  CHECK REMINDERS
+*/
+
+let lastReminderMinute =
+  null;
+
 cron.schedule(
 
-  '50 14 * * *',
+  '* * * * *',
 
   async () => {
 
-    console.log(
-      'Auto reminder 14:50'
-    );
+    try {
 
-    await remindAll();
+      const reminders =
+        getReminderTimes();
+
+      const now =
+        new Date();
+
+      const current =
+        `${String(
+          now.getHours()
+        ).padStart(2, '0')}:${String(
+          now.getMinutes()
+        ).padStart(2, '0')}`;
+
+      if (
+        lastReminderMinute ===
+        current
+      ) {
+
+        return;
+
+      }
+
+      if (
+        reminders.includes(
+          current
+        )
+      ) {
+
+        lastReminderMinute =
+          current;
+
+        console.log(
+          'Dynamic reminder:',
+          current
+        );
+
+        await remindAll();
+
+      }
+
+    } catch (err) {
+
+      console.log(
+        'Reminder error:',
+        err
+      );
+
+    }
 
   }
 
 );
-
-cron.schedule(
-
-  '50 17 * * *',
-
-  async () => {
-
-    console.log(
-      'Auto reminder 17:50'
-    );
-
-    await remindAll();
-
-  }
-
-);
-
-cron.schedule(
-
-  '50 20 * * *',
-
-  async () => {
-
-    console.log(
-      'Auto reminder 20:50'
-    );
-
-    await remindAll();
-
-  }
-
-);
-
-cron.schedule(
-
-  '50 6 * * *',
-
-  async () => {
-
-    console.log(
-      'Auto reminder 06:50'
-    );
-
-    await remindAll();
-
-  }
-
-);
-
 /*
   EXPORTS
 */
@@ -740,6 +813,27 @@ function clearArchive() {
 }
 
 
+function deleteNotification(
+  id
+) {
+
+  const index =
+    notifications.findIndex(
+      (n) => n.id === id
+    );
+
+  if (index !== -1) {
+
+    notifications.splice(
+      index,
+      1
+    );
+
+  }
+
+}
+
+
 module.exports = {
 
   statistics,
@@ -754,6 +848,8 @@ module.exports = {
 
 clearArchive,
   
-  archiveStatistics
+  archiveStatistics,
+
+deleteNotification,
 
 };

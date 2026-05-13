@@ -17,6 +17,15 @@ import {
   useState
 } from 'react';
 
+const defaultReminders = [
+
+  '14:45',
+  '17:45',
+  '20:45',
+  '06:45'
+
+];
+
 function SettingsPage() {
 
   const [
@@ -24,7 +33,14 @@ function SettingsPage() {
     setCountShiftTotal
   ] = useState(true);
 
+  const [
+    reminders,
+    setReminders
+  ] = useState([]);
+
   useEffect(() => {
+
+  const load = async () => {
 
     const saved =
       localStorage.getItem(
@@ -39,7 +55,32 @@ function SettingsPage() {
 
     }
 
-  }, []);
+    try {
+
+      const reminders =
+        await window
+          .require('electron')
+          .ipcRenderer.invoke(
+            'get-reminders'
+          );
+
+      setReminders(reminders);
+
+    } catch (err) {
+
+      console.log(err);
+
+      setReminders(
+        defaultReminders
+      );
+
+    }
+
+  };
+
+  load();
+
+}, []);
 
   const toggleShiftTotal = () => {
 
@@ -54,6 +95,71 @@ function SettingsPage() {
     );
 
   };
+
+  async function saveReminders(
+  newList
+) {
+
+  setReminders(newList);
+
+  try {
+
+    await window
+      .require('electron')
+      .ipcRenderer.invoke(
+
+        'save-reminders',
+
+        newList
+
+      );
+
+  } catch (err) {
+
+    console.log(err);
+
+  }
+
+}
+
+  function addReminder() {
+
+    const newList = [
+      ...reminders,
+      '00:00'
+    ];
+
+    saveReminders(newList);
+
+  }
+
+  function deleteReminder(
+    index
+  ) {
+
+    const newList =
+      reminders.filter(
+        (_, i) => i !== index
+      );
+
+    saveReminders(newList);
+
+  }
+
+  function updateReminder(
+    index,
+    value
+  ) {
+
+    const newList = [
+      ...reminders
+    ];
+
+    newList[index] = value;
+
+    saveReminders(newList);
+
+  }
 
   return (
 
@@ -373,52 +479,124 @@ function SettingsPage() {
             }}
           >
 
-            {[
-              '14:50',
-              '17:50',
-              '20:50',
-              '06:50'
-            ].map((time) => (
+            {reminders.map(
+              (time, index) => (
 
-              <div
+                <div
 
-                key={time}
+                  key={index}
 
-                style={{
+                  style={{
 
-                  background:
-                    'rgba(255,255,255,0.05)',
+                    background:
+                      'rgba(255,255,255,0.05)',
 
-                  border:
-                    '1px solid rgba(255,255,255,0.06)',
+                    border:
+                      '1px solid rgba(255,255,255,0.06)',
 
-                  padding:
-                    '16px 18px',
+                    padding:
+                      '16px 18px',
 
-                  borderRadius: 16,
+                    borderRadius: 16,
 
-                  display: 'flex',
+                    display: 'flex',
 
-                  justifyContent:
-                    'space-between',
+                    justifyContent:
+                      'space-between',
 
-                  alignItems: 'center'
+                    alignItems: 'center',
 
-                }}
+                    gap: 12
 
-              >
+                  }}
 
-                <strong>
-                  {time}
-                </strong>
+                >
 
-                <div className="device-status online">
-                  ON
+                  <input
+
+                    type="time"
+
+                    value={time}
+
+                    onChange={(e) =>
+
+                      updateReminder(
+                        index,
+                        e.target.value
+                      )
+
+                    }
+
+                    style={{
+
+                      background:
+                        'transparent',
+
+                      border: 'none',
+
+                      color: 'white',
+
+                      fontSize: 16,
+
+                      fontWeight: 700
+
+                    }}
+
+                  />
+
+                  <button
+
+                    onClick={() =>
+                      deleteReminder(index)
+                    }
+
+                    style={{
+
+                      background:
+                        '#dc2626',
+
+                      border: 'none',
+
+                      color: 'white',
+
+                      width: 34,
+
+                      height: 34,
+
+                      borderRadius: 10,
+
+                      cursor: 'pointer',
+
+                      fontWeight: 700
+
+                    }}
+
+                  >
+
+                    ×
+
+                  </button>
+
                 </div>
 
-              </div>
+              )
+            )}
 
-            ))}
+            <button
+
+              className="scan-btn"
+
+              style={{
+                marginTop: 18
+              }}
+
+              onClick={addReminder}
+
+            >
+
+              + Добавить время
+
+            </button>
 
           </div>
 

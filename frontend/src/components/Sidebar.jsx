@@ -102,8 +102,8 @@ function Sidebar() {
   const [collapsed, setCollapsed] =
     useState(false);
 
-  const [notifications, setNotifications] =
-    useState([]);
+  const [notificationsCount, setNotificationsCount] =
+  useState(0);
 
   /*
     LOAD NOTIFICATIONS
@@ -111,14 +111,24 @@ function Sidebar() {
 
   async function loadNotifications() {
 
-    const result =
-      await ipcRenderer.invoke(
-        'get-notifications'
-      );
+  const stats =
+    await ipcRenderer.invoke(
+      'get-statistics'
+    );
 
-    setNotifications(result);
+  let total = 0;
 
-  }
+  Object.values(stats).forEach(
+    (room) => {
+
+      total += room.length;
+
+    }
+  );
+
+  setNotificationsCount(total);
+
+}
 
   useEffect(() => {
 
@@ -230,13 +240,13 @@ function Sidebar() {
                   {item.label ===
                     'Статистика' &&
 
-                    notifications.length > 0 && (
+                    notificationsCount > 0 && (
 
                       <div
                         className="nav-badge"
                       >
                         {
-                          notifications.length
+                          notificationsCount
                         }
                       </div>
 
@@ -306,7 +316,7 @@ function Sidebar() {
 
               <span>
                 {
-                  notifications.length
+                  notificationsCount
                 } notifications
               </span>
 
