@@ -1,7 +1,7 @@
 {
   "name": "diona-control-panel-v2",
   "private": true,
-  "version": "2.1.0",
+  "version": "2.1.1",
   "description": "Diona Control Panel",
   "author": "zhukovskiyyy",
   "main": "electron/main.cjs",
@@ -14,7 +14,7 @@
     "publish": "electron-builder --publish always"
   },
   "dependencies": {
-    "axios": "^1.16.0",
+    "axios": "^1.16.1",
     "electron-updater": "^6.3.9",
     "framer-motion": "^12.38.0",
     "lucide-react": "^0.468.0",
@@ -34,37 +34,31 @@
     "vite": "^5.4.2"
   },
   "build": {
-  "appId": "com.diona.control",
-
-  "productName": "Diona",
-
-  "directories": {
-    "output": "release"
-  },
-
-  "files": [
-    "dist/**/*",
-    "electron/**/*",
-    "backend/**/*",
-    "package.json",
-    "telegramBot.js",
-    "reminders.json"
-  ],
-
-  "extraMetadata": {
-    "main": "electron/main.cjs"
-  },
-
-  "win": {
-    "target": "nsis"
-  },
-
-  "publish": [
-    {
-      "provider": "github",
-      "owner": "zhukovskiyyy",
-      "repo": "diona-control"
-    }
-  ]
-}
+    "appId": "com.diona.control",
+    "productName": "Diona",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*",
+      "backend/**/*",
+      "package.json",
+      "telegramBot.js",
+      "reminders.json"
+    ],
+    "extraMetadata": {
+      "main": "electron/main.cjs"
+    },
+    "win": {
+      "target": "nsis"
+    },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "zhukovskiyyy",
+        "repo": "diona-control"
+      }
+    ]
+  }
 }

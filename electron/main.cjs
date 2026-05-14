@@ -635,6 +635,153 @@ ipcMain.handle(
 
 
 /* =========================
+   USERNAME CHECKER
+========================= */
+
+async function checkChaturbate(
+  username
+) {
+
+  try {
+
+    const res =
+      await axios.get(
+
+        `https://chaturbate.com/${username}/`,
+
+        {
+          validateStatus:
+            () => true
+        }
+
+      );
+
+    return res.status === 404;
+
+  } catch {
+
+    return false;
+
+  }
+
+}
+
+async function checkStripchat(
+  username
+) {
+
+  try {
+
+    const res =
+      await axios.get(
+
+        `https://stripchat.com/${username}`,
+
+        {
+          validateStatus:
+            () => true
+        }
+
+      );
+
+    return res.status === 404;
+
+  } catch {
+
+    return false;
+
+  }
+
+}
+
+async function checkCamsoda(
+  username
+) {
+
+  try {
+
+    const res =
+      await axios.get(
+
+        `https://www.camsoda.com/${username}`,
+
+        {
+          validateStatus:
+            () => true
+        }
+
+      );
+
+    return res.status === 404;
+
+  } catch {
+
+    return false;
+
+  }
+
+}
+
+ipcMain.handle(
+
+  'check-username',
+
+  async (_, username) => {
+
+  console.log(
+    'IPC CHECK:',
+    username
+  );
+
+    
+
+    const [
+
+      cb,
+      sc,
+      cs
+
+    ] = await Promise.all([
+
+      checkChaturbate(
+        username
+      ),
+
+      checkStripchat(
+        username
+      ),
+
+      checkCamsoda(
+        username
+      )
+
+    ]);
+
+    return {
+
+      username,
+
+      available:
+        cb || sc || cs,
+
+      sites: {
+
+        chaturbate: cb,
+
+        stripchat: sc,
+
+        camsoda: cs
+
+      }
+
+    };
+
+  }
+
+);
+
+
+/* =========================
    TERMINAL
 ========================= */
 

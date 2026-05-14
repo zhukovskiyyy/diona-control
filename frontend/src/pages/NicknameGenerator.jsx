@@ -5,8 +5,14 @@ import {
 import {
   Copy,
   Check,
-  RefreshCw
+  RefreshCw,
+  LoaderCircle,
+  Trash2
 } from 'lucide-react';
+
+const { ipcRenderer } =
+  window.require('electron');
+
 
 /* HUGE DATASET */
 
@@ -53,8 +59,6 @@ const patterns = [
   'wordname',
   'name_word_end',
   'word_name_end',
-  'name.end',
-  'word.end',
   'namexname',
   'namexword',
   'wordxname',
@@ -63,8 +67,6 @@ const patterns = [
   'name_word123',
   'softname',
   'doubleword',
-  'name.word',
-  'word.name',
   'name__word',
   'word__name',
   'name-word',
@@ -146,16 +148,28 @@ function generateUsername() {
         '_'
       )
       .replaceAll(
+        '--',
+        '-'
+      )
+      .replaceAll(
         '123',
         Math.floor(
           Math.random() *
-          999
+          9999
         )
       )
       .replaceAll(
         'xname',
         `x${secondName}`
       );
+
+  username =
+    username
+      .replace(/\./g, '')
+      .replace(/-{2,}/g, '-')
+      .replace(/_{2,}/g, '_')
+      .replace(/^[-_]+/, '')
+      .replace(/[-_]+$/, '');
 
   return username.toLowerCase();
 
@@ -164,48 +178,134 @@ function generateUsername() {
 function NicknameGenerator() {
 
   const [nicknames, setNicknames] =
-    useState([]);
+    useState(() => {
 
-  const [copiedIndex, setCopiedIndex] =
+      const saved =
+        localStorage.getItem(
+          'generatedNicknames'
+        );
+
+      return saved
+        ? JSON.parse(saved)
+        : [];
+
+    });
+
+  const [loading, setLoading] =
+    useState(false);
+
+  const [copiedNick, setCopiedNick] =
     useState(null);
 
-  function generateNicknames() {
+  async function generateNicknames() {
+
+    setLoading(true);
+
+    setNicknames([]);
+
+    localStorage.removeItem(
+      'generatedNicknames'
+    );
 
     const generated =
       new Set();
 
     while (
-      generated.size < 100
+      generated.size < 10
     ) {
 
-      generated.add(
-        generateUsername()
-      );
+      const username =
+        generateUsername();
+
+      if (
+        generated.has(
+          username
+        )
+      ) {
+        continue;
+      }
+
+      try {
+
+        const result =
+          await ipcRenderer.invoke(
+
+            'check-username',
+
+            username
+
+          );
+
+        if (
+          result.available
+        ) {
+
+          generated.add(
+            username
+          );
+
+          const arr =
+            Array.from(
+              generated
+            );
+
+          setNicknames(arr);
+
+          localStorage.setItem(
+
+            'generatedNicknames',
+
+            JSON.stringify(arr)
+
+          );
+
+        }
+
+        await new Promise(
+          (r) =>
+            setTimeout(
+              r,
+              80
+            )
+        );
+
+      } catch (err) {
+
+        console.log(err);
+
+      }
 
     }
 
-    setNicknames(
-      Array.from(generated)
-    );
+    setLoading(false);
 
   }
 
   async function copyNickname(
-    text,
-    index
+    text
   ) {
 
     await navigator.clipboard.writeText(
       text
     );
 
-    setCopiedIndex(index);
+    setCopiedNick(text);
 
     setTimeout(() => {
 
-      setCopiedIndex(null);
+      setCopiedNick(null);
 
-    }, 1000);
+    }, 1200);
+
+  }
+
+  function clearNicknames() {
+
+    setNicknames([]);
+
+    localStorage.removeItem(
+      'generatedNicknames'
+    );
 
   }
 
@@ -218,11 +318,11 @@ function NicknameGenerator() {
         <div>
 
           <h1>
-            Nickname Generator
+            Diona Nickname Generator
           </h1>
 
           <p>
-            Huge realistic username pool
+            Генератор никнеймов для платформ
           </p>
 
         </div>
@@ -236,18 +336,110 @@ function NicknameGenerator() {
         }}
       >
 
-        <button
-          className="scan-btn"
-          onClick={
-            generateNicknames
-          }
+        <div
+
+          style={{
+
+            display: 'flex',
+
+            gap: 12,
+
+            flexWrap: 'wrap'
+
+          }}
+
         >
 
-          <RefreshCw size={16} />
+          <button
 
-          Generate 100 usernames
+            className="scan-btn"
 
-        </button>
+            disabled={loading}
+
+            onClick={
+              generateNicknames
+            }
+
+            style={{
+
+              opacity:
+                loading ? 0.7 : 1,
+
+              cursor:
+                loading
+                  ? 'not-allowed'
+                  : 'pointer',
+
+              display: 'flex',
+
+              alignItems: 'center',
+
+              gap: 10
+
+            }}
+
+          >
+
+            {loading ? (
+
+              <LoaderCircle
+                size={18}
+                className="spin"
+              />
+
+            ) : (
+
+              <RefreshCw size={16} />
+
+            )}
+
+            {loading
+              ? 'Generating usernames...'
+              : 'Generate usernames'}
+
+          </button>
+
+          <button
+
+            onClick={
+              clearNicknames
+            }
+
+            style={{
+
+              background:
+                '#ff3b5c',
+
+              border: 'none',
+
+              color: 'white',
+
+              padding:
+                '0 18px',
+
+              borderRadius: 14,
+
+              cursor: 'pointer',
+
+              display: 'flex',
+
+              alignItems: 'center',
+
+              gap: 8,
+
+              fontWeight: 600
+
+            }}
+
+          >
+
+            <Trash2 size={16} />
+
+            Clear
+
+          </button>
+
+        </div>
 
       </div>
 
@@ -270,13 +462,12 @@ function NicknameGenerator() {
 
         {nicknames.map(
           (
-            nick,
-            index
+            nick
           ) => (
 
             <div
 
-              key={index}
+              key={nick}
 
               className="device-card"
 
@@ -287,7 +478,10 @@ function NicknameGenerator() {
                 justifyContent:
                   'space-between',
 
-                alignItems: 'center'
+                alignItems: 'center',
+
+                animation:
+                  'fadeIn 0.35s ease'
 
               }}
 
@@ -307,7 +501,7 @@ function NicknameGenerator() {
 
                 >
 
-                  GENERATED
+                  AVAILABLE
 
                 </div>
 
@@ -319,7 +513,10 @@ function NicknameGenerator() {
 
                     fontSize: 26,
 
-                    fontWeight: 700
+                    fontWeight: 700,
+
+                    wordBreak:
+                      'break-word'
 
                   }}
 
@@ -335,8 +532,7 @@ function NicknameGenerator() {
 
                 onClick={() =>
                   copyNickname(
-                    nick,
-                    index
+                    nick
                   )
                 }
 
@@ -354,7 +550,7 @@ function NicknameGenerator() {
 
                   background:
 
-                    copiedIndex === index
+                    copiedNick === nick
 
                       ? 'rgba(77,255,145,0.18)'
 
@@ -369,7 +565,7 @@ function NicknameGenerator() {
 
               >
 
-                {copiedIndex === index ? (
+                {copiedNick === nick ? (
 
                   <Check
                     size={20}
@@ -390,6 +586,55 @@ function NicknameGenerator() {
         )}
 
       </div>
+
+      <style>
+
+        {`
+
+          .spin {
+
+            animation:
+              spin 1s linear infinite;
+
+          }
+
+          @keyframes spin {
+
+            from {
+              transform: rotate(0deg);
+            }
+
+            to {
+              transform: rotate(360deg);
+            }
+
+          }
+
+          @keyframes fadeIn {
+
+            from {
+
+              opacity: 0;
+
+              transform:
+                translateY(8px);
+
+            }
+
+            to {
+
+              opacity: 1;
+
+              transform:
+                translateY(0);
+
+            }
+
+          }
+
+        `}
+
+      </style>
 
     </div>
 
