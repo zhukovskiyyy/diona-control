@@ -348,26 +348,65 @@ ipcMain.handle(
 ========================= */
 
 ipcMain.handle(
+
   'start-shift',
+
   async () => {
+
+    /*
+      CHROME
+    */
 
     exec(
       'start chrome',
       { shell: true }
     );
 
+    /*
+      TELEGRAM
+    */
+
     exec(
+
       `"${process.env.APPDATA}\\Telegram Desktop\\Telegram.exe"`,
+
       () => {}
+
+    );
+
+    /*
+      PCLOUD
+    */
+
+    exec(
+
+      `"C:\\Program Files\\pCloud Drive\\pcloud.exe"`,
+
+      (err) => {
+
+        if (err) {
+
+          console.log(
+            'pCloud start error:',
+            err.message
+          );
+
+        }
+
+      }
+
     );
 
     return true;
 
   }
+
 );
 
 ipcMain.handle(
+
   'end-shift',
+
   async () => {
 
     exec(
@@ -380,9 +419,20 @@ ipcMain.handle(
       () => {}
     );
 
+    exec(
+      'taskkill /IM pCloud.exe /F',
+      () => {}
+    );
+
+    exec(
+      'taskkill /IM pcloud.exe /F',
+      () => {}
+    );
+
     return true;
 
   }
+
 );
 
 
