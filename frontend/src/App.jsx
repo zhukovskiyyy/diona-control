@@ -27,6 +27,7 @@ import ShiftManager from './pages/ShiftManager';
 import Statistics from './pages/Statistics';
 import Archive from './pages/Archive';
 import SettingsPage from './pages/Settings';
+import NicknameGenerator from './pages/NicknameGenerator';
 
 import './styles/global.css';
 
@@ -126,6 +127,11 @@ function App() {
             <Route
               path="/archive"
               element={<Archive />}
+            />
+
+            <Route
+              path="/nicknames"
+              element={<NicknameGenerator />}
             />
 
             <Route

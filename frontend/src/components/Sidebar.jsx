@@ -11,7 +11,8 @@ import {
   Briefcase,
   BarChart3,
   Archive,
-  BellDot
+  BellDot,
+  Sparkles
 } from 'lucide-react';
 
 import {
@@ -81,6 +82,12 @@ const items = [
     label: 'Архив',
     icon: <Archive size={20} />,
     path: '/archive'
+  },
+
+  {
+  label: 'Никнеймы',
+  icon: <Sparkles size={20} />,
+  path: '/nicknames'
   },
 
   {
