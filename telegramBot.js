@@ -182,16 +182,49 @@ function extractTotal(
   text
 ) {
 
-  const match =
-    text.match(
+  if (!text) {
+    return 0;
+  }
 
-      /(total|Total|TOTAL|тотал|Тотал|ТОТАЛ|итого|Итого|ИТОГО|всього|Всього|ВСЬОГО|загалом|Загалом|ЗАГАЛОМ|сумма|Сумма|СУММА)\s*:?\s*(\d+)/i
+  const lines =
+    text
+      .replace(/\r/g, '')
+      .split('\n');
 
-    );
+  for (
+    const line of lines
+  ) {
 
-  return match
-    ? Number(match[2])
-    : 0;
+    const clean =
+      line.trim();
+
+    const isTotalLine =
+
+      /total|тотал|итого|всього|загалом|сумма/i
+        .test(clean);
+
+    if (
+      isTotalLine
+    ) {
+
+      const number =
+        clean.match(/\d+/);
+
+      if (
+        number
+      ) {
+
+        return Number(
+          number[0]
+        );
+
+      }
+
+    }
+
+  }
+
+  return 0;
 
 }
 
