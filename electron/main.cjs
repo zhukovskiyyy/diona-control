@@ -633,7 +633,6 @@ ipcMain.handle(
   }
 );
 
-
 /* =========================
    USERNAME CHECKER
 ========================= */
@@ -658,63 +657,12 @@ async function checkChaturbate(
 
     return res.status === 404;
 
-  } catch {
+  } catch (err) {
 
-    return false;
-
-  }
-
-}
-
-async function checkStripchat(
-  username
-) {
-
-  try {
-
-    const res =
-      await axios.get(
-
-        `https://stripchat.com/${username}`,
-
-        {
-          validateStatus:
-            () => true
-        }
-
-      );
-
-    return res.status === 404;
-
-  } catch {
-
-    return false;
-
-  }
-
-}
-
-async function checkCamsoda(
-  username
-) {
-
-  try {
-
-    const res =
-      await axios.get(
-
-        `https://www.camsoda.com/${username}`,
-
-        {
-          validateStatus:
-            () => true
-        }
-
-      );
-
-    return res.status === 404;
-
-  } catch {
+    console.log(
+      'CB CHECK ERROR:',
+      err.message
+    );
 
     return false;
 
@@ -728,49 +676,25 @@ ipcMain.handle(
 
   async (_, username) => {
 
-  console.log(
-    'IPC CHECK:',
-    username
-  );
+    console.log(
+      'IPC CHECK:',
+      username
+    );
 
-    
-
-    const [
-
-      cb,
-      sc,
-      cs
-
-    ] = await Promise.all([
-
-      checkChaturbate(
+    const cb =
+      await checkChaturbate(
         username
-      ),
-
-      checkStripchat(
-        username
-      ),
-
-      checkCamsoda(
-        username
-      )
-
-    ]);
+      );
 
     return {
 
       username,
 
-      available:
-        cb || sc || cs,
+      available: cb,
 
       sites: {
 
-        chaturbate: cb,
-
-        stripchat: sc,
-
-        camsoda: cs
+        chaturbate: cb
 
       }
 
@@ -779,7 +703,6 @@ ipcMain.handle(
   }
 
 );
-
 
 /* =========================
    TERMINAL
